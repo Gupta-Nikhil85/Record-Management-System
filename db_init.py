@@ -36,8 +36,11 @@ class initializeStudentDB:
         print("Database Dropped Successfully.")
 
     def __init__(self) -> None:
-        self.dbConfig = ast.literal_eval(os.environ.get("DBCONFIG"))
-        self.db = mc.connect(host=self.dbConfig['host'], user=self.dbConfig['user'], passwd=self.dbConfig['passwd'])
+        self.host=os.environ.get("HOST")
+        self.user=os.environ.get("USER")
+        self.password=os.environ.get("PASSWORD")
+        # self.dbConfig = ast.literal_eval(os.environ.get("DBCONFIG"))
+        self.db = mc.connect(host=self.host, user=self.user, passwd=self.password)
         self.dbCursor = self.db.cursor()
         self.createDatabase()
         self.useStudentDatabase()
