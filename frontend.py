@@ -1,19 +1,6 @@
-#Nikhil Gupta
-#2K20/MC/086
-
 from tkinter import *
 from tkinter import ttk
-import mysql.connector as mc
-
-#connect to database
-def connect_to_database():
-    global mydb
-    mydb = mc.connect(
-        host="localhost",
-        user="root",
-        passwd="nkg852852",
-        database="student_data"
-    )
+from backend import *
 
 # shut the window
 def close_window(tool):
@@ -24,35 +11,26 @@ def add_student():
     
     def add_rec():
         from tkinter import messagebox
-        #connectin database
-        connect_to_database()
-        mycursor = mydb.cursor()
 
-        #define the variables
+        #Getting the values from the fields...
+
         student_id = int(student_id_entry.get())
         student_name = student_name_entry.get()
         student_age = int(student_age_entry.get())
-        student_roll = int(student_roll_entry.get())
+        student_roll = student_roll_entry.get()
         student_branch = student_branch_entry.get()
         
-        #running sql query
-        sql="select * from data where id=" + str(student_id)
-        mycursor.execute(sql)
-        myresult = mycursor.fetchall()
-        #check if the student is already in the database
-        
-        if len(myresult) == 0:
-            sql = "insert into data(id,name,age,rollNo,branch) values(%s,%s,%s,%s,%s)"
-            val = (student_id, student_name, student_age, student_roll, student_branch)
-            mycursor.execute(sql, val)
-            mydb.commit()
-            messagebox.showinfo("Success", "Details Added Successfully")
+        #Calling the backend....
+
+        result=add_new_record(student_id, student_name, student_age, student_roll, student_branch)
+        if result['success']:
+            messagebox.showinfo("Success", result['message'])
         else:
-            messagebox.showinfo("Error", "Student ID already exist")
-        #close the window
+            messagebox.showinfo("Error", result['message'])
+
+        #Closing the window....
         addrecordwindow.destroy()
-        mydb.close()
-        mycursor.close()
+
 
     addrecordwindow= Toplevel()
     addrecordwindow.title("Add Record")
@@ -109,23 +87,14 @@ def add_student():
 def search_student():
     from tkinter import messagebox
     def search_rec():
-        #connectin database
-        connect_to_database()
-        mycursor = mydb.cursor()
-
-        #define the variables
+        
+        #Getting the id....
         student_id = int(student_id_entry.get())
 
-        #running sql query
-        sql="select * from data where id=" + str(student_id)
-        mycursor.execute(sql)
-        myresult = mycursor.fetchall()
-        #check if the student is already in the database
-        
-        if len(myresult) == 0:
-            messagebox.showinfo("Error", "Student ID does not exist")
-            searchrecordwindow.destroy()
-        else:
+        #Fetching record from backend...
+        result=search_record_by_id(student_id)
+        if(result['success']):
+
             student_name=Label(searchrecordwindow,text="Name",font=("arial",20,"bold"))
             student_name.grid(row=2,column=0,padx=20,pady=20)
 
@@ -150,7 +119,7 @@ def search_student():
             student_branch_value=Entry(searchrecordwindow,text="",font=("arial",20))
             student_branch_value.grid(row=5,column=1,padx=20,pady=20)
 
-            for x in myresult:
+            for x in result['data']:
                 student_name_value.insert(0,x[1])
                 student_age_value.insert(0,x[2])
                 student_roll_value.insert(0,x[3])
@@ -159,9 +128,9 @@ def search_student():
             back_button.grid(row=6, column=0, padx=10, pady=40)
 
             searchButton.grid(row=6, column=2, padx=10, pady=40)
-
-        mydb.close()
-        mycursor.close()
+        else:
+            messagebox.showinfo("Error", result['message'])
+            searchrecordwindow.destroy()
 
     searchrecordwindow= Toplevel()
     searchrecordwindow.title("Search Record")
@@ -191,46 +160,27 @@ def modify_student():
     def modify_rec_helper():
         
         def modify_rec():
-            #connectin database
-            connect_to_database()
-            mycursor = mydb.cursor()
 
-            #define the variables
+            #Getting new values...
             student_id = int(student_id_entry.get())
             student_name = student_name_value.get()
             student_age = int(student_age_value.get())
-            student_roll = int(student_roll_value.get())
+            student_roll = student_roll_value.get()
             student_branch = student_branch_value.get()
 
-            #running sql query
-            sql="update data set name=%s, age=%s, rollNo=%s, branch=%s where id="+ str(student_id)
-            val=(student_name,student_age,student_roll,student_branch)
-            mycursor.execute(sql,val)
-            mydb.commit()
-            messagebox.showinfo("Success", "Student record updated successfully")
+            #Updating record using backend...
+            result=modify_record(student_id, student_name, student_age, student_roll, student_branch)
+            messagebox.showinfo("Success", result['message'])
             modifyrecordwindow.destroy()
-            mydb.close()
-            mycursor.close()
-
-
-
-        #connect in database
-        connect_to_database()
-        mycursor = mydb.cursor()
-
-        #define the variables
+        
+        #Getting the id....
         student_id = int(student_id_entry.get())
 
-        #running sql query
-        sql="select * from data where id=" + str(student_id)
-        mycursor.execute(sql)
-        myresult = mycursor.fetchall()
-        #check if the student is already in the database
-        
-        if len(myresult) == 0:
-            messagebox.showinfo("Error", "Student ID does not exist")
-            modifyrecordwindow.destroy()
-        else:
+        #Fetching record from backend...
+        result=search_record_by_id(student_id)
+
+        #check if the student exists in the database
+        if(result['success']):
             student_name=Label(modifyrecordwindow,text="Name",font=("arial",20,"bold"))
             student_name.grid(row=2,column=0,padx=20,pady=20)
 
@@ -255,7 +205,7 @@ def modify_student():
             student_branch_value=Entry(modifyrecordwindow,text="",font=("arial",20))
             student_branch_value.grid(row=5,column=1,padx=20,pady=20)
 
-            for x in myresult:
+            for x in result['data']:
                 student_name_value.insert(0,x[1])
                 student_age_value.insert(0,x[2])
                 student_roll_value.insert(0,x[3])
@@ -266,9 +216,9 @@ def modify_student():
             modify_button["command"] = lambda: modify_rec()
             modify_button["text"] = "Modify"
             modify_button.grid(row=6, column=1, padx=10, pady=40)
-
-        mydb.close()
-        mycursor.close()
+        else:
+            messagebox.showinfo("Error", result['message'])
+            modifyrecordwindow.destroy()
     
 
     modifyrecordwindow= Toplevel()
@@ -295,36 +245,19 @@ def modify_student():
 def delete_student():
     from tkinter import messagebox
     def delete_rec(student_id):
-        #connectin database
-        connect_to_database()
-        mycursor = mydb.cursor()
-        #running sql query
-        sql="delete from data where id=" + str(student_id)
-        mycursor.execute(sql)
-        mydb.commit()
-        messagebox.showinfo("Success", "Student Deleted Successfully")
+        result=delete_record(student_id)
+        messagebox.showinfo("Success", result['message'])
         deleterecordwindow.destroy()
-        mydb.close()
-        mycursor.close()
-    
+
     def del_rec_helper():
-        #connectin database
-        connect_to_database()
-        mycursor = mydb.cursor()
 
         #define the variables
         student_id = int(student_id_entry.get())
 
-        #running sql query
-        sql="select * from data where id=" + str(student_id)
-        mycursor.execute(sql)
-        myresult = mycursor.fetchall()
-        #check if the student is already in the database
-        
-        if len(myresult) == 0:
-            messagebox.showinfo("Error", "Student ID does not exist")
-            deleterecordwindow.destroy()
-        else:
+        #check if the student exist in the database
+        result=search_record_by_id(student_id)
+
+        if result['success']:
             student_name=Label(deleterecordwindow,text="Name",font=("arial",20,"bold"))
             student_name.grid(row=2,column=0,padx=20,pady=20)
 
@@ -349,7 +282,7 @@ def delete_student():
             student_branch_value=Entry(deleterecordwindow,text="",font=("arial",20))
             student_branch_value.grid(row=5,column=1,padx=20,pady=20)
 
-            for x in myresult:
+            for x in result['data']:
                 student_name_value.insert(0,x[1])
                 student_age_value.insert(0,x[2])
                 student_roll_value.insert(0,x[3])
@@ -360,9 +293,9 @@ def delete_student():
             delete_button["command"] = lambda: delete_rec(student_id)
             delete_button["text"] = "Delete"
             delete_button.grid(row=6, column=1, padx=10, pady=40)
-
-        mydb.close()
-        mycursor.close()
+        else:
+            messagebox.showinfo("Error", result['message'])
+            deleterecordwindow.destroy()
     
 
     deleterecordwindow= Toplevel()
@@ -394,19 +327,11 @@ def view_all_records():
     view_all_records_window.geometry("1600x1600")
     view_all_records_window.configure(background='#00BFFF')
 
-    #connectin database
-    connect_to_database()
-    mycursor = mydb.cursor()
-
-
     view_all_records_label=Label(view_all_records_window,text="View All Records",font=("arial",20,"bold"))
     view_all_records_label.grid(row=0,column=0,padx=20,pady=20)
 
     #running sql query
-    sql="select * from data"
-    mycursor.execute(sql)
-    myresult = mycursor.fetchall()
-    
+    result= fetch_all_records()
     lhead=["ID","Name","Age","Roll No","Branch"]
     
     #using treeview
@@ -418,11 +343,8 @@ def view_all_records():
     tree.heading("#4",text="Roll No")
     tree.heading("#5",text="Branch")
 
-    for x in myresult:
+    for x in result['data']:
         tree.insert("",END,values=x)
-    
-    mydb.close()
-    mycursor.close()
 
     back_button = Button(view_all_records_window, text="Back", font=("Times New Roman", 20), command=lambda: close_window(view_all_records_window))
     back_button.grid(row=1, column=0, padx=10, pady=40)   
