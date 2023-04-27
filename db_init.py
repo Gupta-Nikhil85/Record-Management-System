@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import os
-import ast
 import mysql.connector as mc
 load_dotenv('.env')
 
@@ -16,7 +15,7 @@ class initializeStudentDB:
 
     def createStudentTable(self):
         self.dbCursor.execute(
-            '''CREATE TABLE DATA (
+            '''CREATE TABLE data (
                 ID int PRIMARY KEY,
                 NAME varchar(20),
                 AGE int,
@@ -27,7 +26,7 @@ class initializeStudentDB:
         print("Table Created Successfully.")
     
     def describeTable(self):
-        self.dbCursor.execute('desc DATA')
+        self.dbCursor.execute('desc data')
         indexList = self.dbCursor.fetchall()
         print(indexList)
 
@@ -36,10 +35,9 @@ class initializeStudentDB:
         print("Database Dropped Successfully.")
 
     def __init__(self) -> None:
-        self.host=os.environ.get("HOST")
-        self.user=os.environ.get("USER")
-        self.password=os.environ.get("PASSWORD")
-        # self.dbConfig = ast.literal_eval(os.environ.get("DBCONFIG"))
+        self.host=os.environ.get("Host")
+        self.user=os.environ.get("User")
+        self.password=os.environ.get("Password")
         self.db = mc.connect(host=self.host, user=self.user, passwd=self.password)
         self.dbCursor = self.db.cursor()
         self.createDatabase()
